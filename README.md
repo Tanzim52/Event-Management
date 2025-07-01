@@ -148,6 +148,5 @@ Fully responsive for all devices
 📬 Contact
 📧 Email: mahin1575@gmail.com
 🌐 Portfolio: [tanzim-4055a.firebaseapp.com](https://tanzim-4055a.firebaseapp.com/)
-🔗 LinkedIn | GitHub
 
 Made with ❤️ by Mahin Jawad Tanzim
