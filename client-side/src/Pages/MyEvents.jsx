@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaEdit, FaTrash, FaTimes } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const MyEvents = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -17,6 +20,11 @@ const MyEvents = () => {
     const { user, logout } = useAuth();
 
     useEffect(() => {
+
+        if (location.state?.success) {
+            toast.success('Event updated successfully!');
+            navigate(location.pathname, { replace: true, state: {} });
+        }
         const fetchMyEvents = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -52,7 +60,7 @@ const MyEvents = () => {
         };
 
         fetchMyEvents();
-    }, [user, logout]);
+    }, [user, logout, location.state, navigate, location.pathname]);
 
     const openDeleteModal = (eventId, eventTitle) => {
         setDeleteModal({
@@ -92,11 +100,18 @@ const MyEvents = () => {
             if (!response.ok) throw new Error('Failed to delete event');
 
             setEvents(events.filter(event => event._id !== deleteModal.eventId));
+            toast.success('Event deleted successfully!');
             closeDeleteModal();
         } catch (err) {
             setError(err.message);
             closeDeleteModal();
         }
+    };
+
+    const handleEditClick = (eventId) => {
+        navigate(`/edit-event/${eventId}`, {
+            state: { from: location.pathname } 
+        });
     };
 
     if (loading) return (
@@ -175,7 +190,7 @@ const MyEvents = () => {
                                 <div className="mt-6 flex space-x-3">
                                     <button
                                         className="flex-1 bg-teal-100 hover:bg-teal-200 text-teal-700 py-2 px-4 rounded-lg flex items-center justify-center"
-                                        onClick={() => navigate(`/edit-event/${event._id}`)}
+                                        onClick={() => handleEditClick(event._id)}
                                     >
                                         <FaEdit className="mr-2" /> Edit
                                     </button>

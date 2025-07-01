@@ -5,9 +5,11 @@ import { motion } from 'framer-motion';
 import { FaCalendarAlt, FaMapMarkerAlt, FaAlignLeft, FaUsers, FaImage } from 'react-icons/fa';
 
 const AddEvent = () => {
+
+    const { user, logout } = useAuth();
     const [formData, setFormData] = useState({
         title: '',
-        name: '',
+        name: user?.name || '',
         date: '',
         time: '',
         location: '',
@@ -17,7 +19,6 @@ const AddEvent = () => {
     });
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
-    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -35,8 +36,9 @@ const AddEvent = () => {
         if (!formData.location.trim()) newErrors.location = 'Location is required';
         if (!formData.description.trim()) newErrors.description = 'Description is required';
         if (isNaN(formData.attendeeCount)) newErrors.attendeeCount = 'Must be a number';
-        if (formData.imageURL && !/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(formData.imageURL)) {
-            newErrors.imageURL = 'Please enter a valid image URL';
+        // Update the imageURL validation in validateForm:
+        if (formData.imageURL && !/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i.test(formData.imageURL)) {
+            newErrors.imageURL = 'Please enter a valid image URL (jpg, png, gif, webp, svg)';
         }
 
         setErrors(newErrors);

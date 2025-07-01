@@ -140,7 +140,11 @@ const EditEvent = () => {
             }
 
             navigate('/my-event');
-        } catch (error) {
+            if (response.ok) {
+            navigate('/my-event', { 
+                state: { success: true } // Add this state
+            });
+        }} catch (error) {
             setErrors({ general: error.message });
         } finally {
             setIsLoading(false);

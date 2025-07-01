@@ -25,18 +25,18 @@ const Upcoming = () => {
     useEffect(() => {
         const fetchUpcomingEvents = async () => {
             try {
-                console.log("Fetching upcoming events...");
+                // console.log("Fetching upcoming events...");
                 const response = await fetch(`${import.meta.env.VITE_BASE_URL}/api/events/upcoming`);
 
-                console.log("Response status:", response.status);
+                // console.log("Response status:", response.status);
                 const data = await response.json();
-                console.log("Response data:", data);
+                // console.log("Response data:", data);
 
                 if (!response.ok) throw new Error(data.message || 'Failed to fetch events');
 
                 setEvents(data);
             } catch (err) {
-                console.error("Fetch error:", err);
+                // console.error("Fetch error:", err);
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -58,7 +58,7 @@ const Upcoming = () => {
                     year: 'numeric'
                 });
         } catch (e) {
-            console.error("Date formatting error:", e);
+            // console.error("Date formatting error:", e);
             return 'Invalid date';
         }
     };
@@ -73,7 +73,7 @@ const Upcoming = () => {
                     minute: '2-digit'
                 });
         } catch (e) {
-            console.error("Time formatting error:", e);
+            // console.error("Time formatting error:", e);
             return '';
         }
     };

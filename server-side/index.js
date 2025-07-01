@@ -16,7 +16,7 @@ let eventsCollection;
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: `${process.env.FRONTEND_URL}` || 'http://localhost:5173',
     credentials: true
 }));
 app.use(express.json());
@@ -33,13 +33,13 @@ async function connectDB() {
 // Auth middleware
 const authenticate = async (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
-    console.log('Received token:', token); // Debug logging
+    // console.log('Received token:', token);
     
     if (!token) return res.status(401).json({ message: "Unauthorized" });
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('Decoded token:', decoded); // Debug logging
+        // console.log('Decoded token:', decoded);
         
         const user = await usersCollection.findOne({ _id: new ObjectId(decoded.id) });
         if (!user) return res.status(401).json({ message: "User not found" });
@@ -47,7 +47,7 @@ const authenticate = async (req, res, next) => {
         req.user = user;
         next();
     } catch (err) {
-        console.error('Token verification error:', err); // Debug logging
+        console.error('Token verification error:', err); 
         res.status(401).json({ message: "Invalid token" });
     }
 };
@@ -81,7 +81,8 @@ app.post("/api/auth/register",
                 password: hashed,
                 photoURL,
                 createdAt: new Date(),
-                updatedAt: new Date()
+                updatedAt: new Date(),
+                joinedEvents: []
             };
 
             const result = await usersCollection.insertOne(user);
@@ -113,34 +114,35 @@ app.post("/api/auth/login",
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('Validation errors:', errors.array()); // Debug log
+    //   console.log('Validation errors:', errors.array()); 
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { email, password } = req.body;
-    console.log('Login attempt for:', email); // Debug log
+    // console.log('Login attempt for:', email); 
 
     try {
       const user = await usersCollection.findOne({ email });
       if (!user || !(await bcrypt.compare(password, user.password))) {
-        console.log('Invalid credentials for:', email); // Debug log
+        // console.log('Invalid credentials for:', email);
         return res.status(400).json({ message: "Invalid credentials." });
       }
 
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "2h" });
 
-      console.log('Login successful for:', email); // Debug log
+    //   console.log('Login successful for:', email); 
       res.json({
         message: "Login successful",
         token,
         user: {
           name: user.name,
           email: user.email,
-          photoURL: user.photoURL
+          photoURL: user.photoURL,
+          joinedEvents: user.joinedEvents || []
         }
       });
     } catch (err) {
-      console.error('Login error:', err); // Debug log
+      console.error('Login error:', err); 
       res.status(500).json({ message: "Login error", error: err.message });
     }
   }
@@ -153,7 +155,8 @@ app.get("/api/auth/verify", authenticate, async (req, res) => {
       user: {
         name: req.user.name,
         email: req.user.email,
-        photoURL: req.user.photoURL
+        photoURL: req.user.photoURL,
+        joinedEvents: req.user.joinedEvents || []
       }
     });
   } catch (err) {
@@ -178,7 +181,8 @@ app.get("/api/auth/me", authenticate, async (req, res) => {
             user: {
                 name: req.user.name,
                 email: req.user.email,
-                photoURL: req.user.photoURL
+                photoURL: req.user.photoURL,
+                joinedEvents: req.user.joinedEvents || []
             }
         });
     } catch (err) {
@@ -233,7 +237,7 @@ app.post("/api/events", authenticate,
 app.get("/api/events/upcoming", async (req, res) => {
   try {
     const now = new Date();
-    console.log("Current time:", now.toISOString());
+    // console.log("Current time:", now.toISOString());
     
     // More flexible query that also logs what's being queried
     const events = await eventsCollection.aggregate([
@@ -255,7 +259,7 @@ app.get("/api/events/upcoming", async (req, res) => {
       }
     ]).toArray();
 
-    console.log("Found events:", JSON.stringify(events, null, 2));
+    // console.log("Found events:", JSON.stringify(events, null, 2));
     res.json(events);
   } catch (err) {
     console.error("Error:", err);
@@ -290,47 +294,55 @@ app.get("/api/events", async (req, res) => {
 // Join an event
 // Join an event
 app.post("/api/events/:id/join", authenticate, async (req, res) => {
-  try {
-    const event = await eventsCollection.findOne({ 
-      _id: new ObjectId(req.params.id) 
-    });
-    
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
+    try {
+        const eventId = req.params.id;
+        const event = await eventsCollection.findOne({ 
+            _id: new ObjectId(eventId) 
+        });
+        
+        if (!event) {
+            return res.status(404).json({ message: "Event not found" });
+        }
+
+        // Convert user._id to string for comparison
+        const userIdString = req.user._id.toString();
+        
+        // Check if user already joined
+        if (event.attendees?.includes(userIdString)) {
+            return res.status(400).json({ message: "Already joined this event" });
+        }
+
+        // Update event
+        const eventUpdate = await eventsCollection.updateOne(
+            { _id: new ObjectId(eventId) },
+            { 
+                $inc: { attendeeCount: 1 },
+                $push: { attendees: userIdString }
+            }
+        );
+
+        if (eventUpdate.modifiedCount === 0) {
+            return res.status(400).json({ message: "Failed to join event" });
+        }
+
+        // Update user's joinedEvents
+        await usersCollection.updateOne(
+            { _id: new ObjectId(userIdString) },
+            { $addToSet: { joinedEvents: eventId } }
+        );
+
+        const updatedEvent = await eventsCollection.findOne({ 
+            _id: new ObjectId(eventId) 
+        });
+        
+        res.json(updatedEvent);
+    } catch (err) {
+        console.error("Join error:", err);
+        res.status(500).json({ 
+            message: "Failed to join event", 
+            error: err.message 
+        });
     }
-
-    // Convert user._id to string for comparison
-    const userIdString = req.user._id.toString();
-    
-    // Check if user already joined
-    if (event.attendees?.includes(userIdString)) {
-      return res.status(400).json({ message: "Already joined this event" });
-    }
-
-    const result = await eventsCollection.updateOne(
-      { _id: new ObjectId(req.params.id) },
-      { 
-        $inc: { attendeeCount: 1 },
-        $push: { attendees: userIdString }
-      }
-    );
-
-    if (result.modifiedCount === 0) {
-      return res.status(400).json({ message: "Failed to join event" });
-    }
-
-    const updatedEvent = await eventsCollection.findOne({ 
-      _id: new ObjectId(req.params.id) 
-    });
-    
-    res.json(updatedEvent);
-  } catch (err) {
-    console.error("Join error:", err);
-    res.status(500).json({ 
-      message: "Failed to join event", 
-      error: err.message 
-    });
-  }
 });
 //  Get single event endpoint
 app.get("/api/events/:id", authenticate, async (req, res) => {

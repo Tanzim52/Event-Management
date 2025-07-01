@@ -50,7 +50,7 @@ const Signup = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        photoURL: formData.photoURL || null // Make photoURL optional
+        photoURL: formData.photoURL  // Make photoURL optional
       });
 
       if (result.success) {
@@ -158,7 +158,7 @@ const Signup = () => {
 
             <div>
               <label htmlFor="photoURL" className="block text-sm font-medium text-gray-700 mb-1">
-                Profile Photo URL (Optional)
+                Profile Photo URL
               </label>
               <input
                 type="url"
