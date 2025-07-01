@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const steps = [
   { title: "Create Event", icon: "📝", desc: "Fill in the event details with our intuitive form" },
@@ -67,9 +68,9 @@ const HowItWorks = () => {
           variants={fadeIn}
           className="mt-16 text-center"
         >
-          <button className="px-8 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2">
+          <Link to='/add-event'><button className="px-8 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2">
             Get Started
-          </button>
+          </button></Link>
         </motion.div>
       </motion.div>
     </section>
