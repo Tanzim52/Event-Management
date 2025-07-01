@@ -141,7 +141,7 @@ npm run dev
 This project was built as part of an assessment task. However, feel free to fork and enhance it further!
 
 🧠 Bonus
-No third-party UI libraries used — fully custom CSS/React/Tailwind
+No third-party Authentication used, A details page given
 
 Fully responsive for all devices
 
