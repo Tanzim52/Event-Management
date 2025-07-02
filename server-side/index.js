@@ -348,12 +348,11 @@ app.post("/api/events/:id/join", authenticate, async (req, res) => {
 app.get("/api/events/:id", authenticate, async (req, res) => {
     try {
         const event = await eventsCollection.findOne({
-            _id: new ObjectId(req.params.id),
-            createdBy: new ObjectId(req.user._id) // Ensure user owns the event
+            _id: new ObjectId(req.params.id)
         });
 
         if (!event) {
-            return res.status(404).json({ message: "Event not found or not authorized" });
+            return res.status(404).json({ message: "Event not found" });
         }
 
         res.json(event);
